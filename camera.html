@@ -35,6 +35,7 @@
 
         .illustration-canvas {
             border: 1px solid #eeeeee;
+            
         }
 
         .footer {
@@ -105,10 +106,11 @@
         }
     </style>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
 </head>
 
 <body>
-    <div>my id:<span></span></div><br><br>
+    <div>my id:<span id="myIdSpan"></span></div><br><br>
     <div><input type="text" id="inputId"><button id="connect">connect</button></div>
     <div id="info" style='display:none'>
     </div>
@@ -130,9 +132,9 @@
             <canvas id="output" class="camera-canvas"></canvas>
             <canvas id="keypoints" class="camera-canvas"></canvas>
         </div>
-        <canvas class="illustration-canvas"></cavnas>
+        <canvas class="illustration-canvas" style="max-height:400px;max-width:400px"></cavnas>
     </div>
-    <video style="height: 400px;width: 400px;" id = "videoIn"></video>
+    <video  id = "videoIn"></video>
     <script src="camera.js"></script>
 </body>
 

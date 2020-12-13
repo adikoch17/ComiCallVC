@@ -44,8 +44,8 @@ let videoHeight = 300;
 let faceDetection = null;
 let illustration = null;
 let canvasScope;
-let canvasWidth = 800;
-let canvasHeight = 800;
+let canvasWidth = 400;
+let canvasHeight = 400;
 
 // ML models
 let facemesh;
@@ -69,6 +69,88 @@ const avatarSvgs = {
  * Loads a the camera to be used in the demo
  *
  */
+
+var peer = new Peer(undefined, {
+  host: 'localhost',
+  port: '3000'
+});
+
+peer.on('open', function(id) {
+  var myIdSpan = document.getElementById("myIdSpan");
+  console.log('My peer ID is: ' + id);
+  myId = id;
+  myIdSpan.innerHTML = myId;
+
+
+  
+});
+
+var call = null;
+var id=null;
+var myId;
+var canvasStream = null;
+
+
+
+var conButton = document.getElementById("connect");
+var idInput = document.getElementById("inputId");
+var canvas = document.querySelector('.illustration-canvas');
+const videoIn = document.getElementById("videoIn");
+
+
+var canvasStream = canvas.captureStream(24);
+videoIn.srcObject = canvasStream;
+
+
+
+conButton.addEventListener("click",()=>{
+  if(canvas){
+    console.log("1");
+    id = idInput.value;
+    if(id!=null && canvasStream!=null){
+      console.log("2");
+      call = peer.call(id,canvasStream);
+  }
+  }
+
+});
+
+
+peer.on('call', function(call) {
+  // Answer the call, providing our mediaStream
+  console.log("3");
+  console.log(canvasStream);
+  call.answer(canvasStream);
+  
+
+  call.on('stream', function(stream) {
+  // `stream` is the MediaStream of the remote peer.
+  // Here you'd add it to an HTML video/canvas element.
+  console.log(4);
+  if(stream){
+    console.log(5);
+  }
+  videoIn.srcObject = stream;
+  videoIn.play();
+});
+
+
+
+});
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
 async function setupCamera() {
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     throw new Error(
@@ -99,7 +181,6 @@ async function setupCamera() {
 async function loadVideo() {
   const video = await setupCamera();
   video.play();
-
   return video;
 }
 
@@ -151,6 +232,9 @@ function setupFPS() {
  * happens. This function loops with a requestAnimationFrame method.
  */
 function detectPoseInRealTime(video) {
+
+
+
   const canvas = document.getElementById('output');
   const keypointCanvas = document.getElementById('keypoints');
   const videoCtx = canvas.getContext('2d');
@@ -247,7 +331,7 @@ function setupCanvas() {
   }  
 
   canvasScope = paper.default;
-  let canvas = document.querySelector('.illustration-canvas');;
+  
   canvas.width = canvasWidth;
   canvas.height = canvasHeight;
   canvasScope.setup(canvas);
