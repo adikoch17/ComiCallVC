@@ -85,10 +85,19 @@ peer.on('open', function(id) {
   
 });
 
+var audio = navigator.mediaDevices.getUserMedia({
+    'audio': true,
+    'video':false
+  });
+
+  
+
 var call = null;
 var id=null;
 var myId;
 var canvasStream = null;
+var con = null;
+
 
 
 
@@ -103,6 +112,7 @@ videoIn.srcObject = canvasStream;
 
 
 
+
 conButton.addEventListener("click",()=>{
   if(canvas){
     console.log("1");
@@ -110,6 +120,7 @@ conButton.addEventListener("click",()=>{
     if(id!=null && canvasStream!=null){
       console.log("2");
       call = peer.call(id,canvasStream);
+      con = peer.connect(id);
   }
   }
 
@@ -134,9 +145,34 @@ peer.on('call', function(call) {
   videoIn.play();
 });
 
-
-
 });
+
+
+peer.on('connection', function(conn) 
+{ 
+
+    console.log('peer connected');
+    con = conn;
+    conn.on('open', function() {
+        console.log('conn open');
+        
+    });
+
+    conn.send(myId);
+
+    con.on('data', function(data) {
+        
+        if(data){
+          call = peer.call(data,canvasStream);
+          console.log(data);
+        }
+          
+      });
+   
+});
+
+
+      
 
 
 
@@ -213,19 +249,19 @@ function setupGui(cameras) {
   gui.add(guiState, 'avatarSVG', Object.keys(avatarSvgs)).onChange(() => parseSVG(avatarSvgs[guiState.avatarSVG]));
   multi.open();
 
-  let output = gui.addFolder('Debug control');
-  output.add(guiState.debug, 'showDetectionDebug');
-  output.add(guiState.debug, 'showIllustrationDebug');
-  output.open();
+  // let output = gui.addFolder('Debug control');
+  // output.add(guiState.debug, 'showDetectionDebug');
+  // output.add(guiState.debug, 'showIllustrationDebug');
+  // output.open();
 }
 
 /**
  * Sets up a frames per second panel on the top-left of the window
  */
-function setupFPS() {
-  stats.showPanel(0);  // 0: fps, 1: ms, 2: mb, 3+: custom
-  document.getElementById('main').appendChild(stats.dom);
-}
+// function setupFPS() {
+//   stats.showPanel(0);  // 0: fps, 1: ms, 2: mb, 3+: custom
+//   document.getElementById('main').appendChild(stats.dom);
+// }
 
 /**
  * Feeds an image to posenet to estimate poses - this is where the magic
@@ -236,18 +272,18 @@ function detectPoseInRealTime(video) {
 
 
   const canvas = document.getElementById('output');
-  const keypointCanvas = document.getElementById('keypoints');
+  // const keypointCanvas = document.getElementById('keypoints');
   const videoCtx = canvas.getContext('2d');
-  const keypointCtx = keypointCanvas.getContext('2d');
+  // const keypointCtx = keypointCanvas.getContext('2d');
 
   canvas.width = videoWidth;
   canvas.height = videoHeight;
-  keypointCanvas.width = videoWidth;
-  keypointCanvas.height = videoHeight;
+  // keypointCanvas.width = videoWidth;
+  // keypointCanvas.height = videoHeight;
 
   async function poseDetectionFrame() {
     // Begin monitoring code for frames per second
-    stats.begin();
+    // stats.begin();
 
     let poses = [];
    
@@ -273,21 +309,21 @@ function detectPoseInRealTime(video) {
     poses = poses.concat(all_poses);
     input.dispose();
 
-    keypointCtx.clearRect(0, 0, videoWidth, videoHeight);
-    if (guiState.debug.showDetectionDebug) {
-      poses.forEach(({score, keypoints}) => {
-      if (score >= minPoseConfidence) {
-          drawKeypoints(keypoints, minPartConfidence, keypointCtx);
-          drawSkeleton(keypoints, minPartConfidence, keypointCtx);
-        }
-      });
-      faceDetection.forEach(face => {
-        Object.values(facePartName2Index).forEach(index => {
-            let p = face.scaledMesh[index];
-            drawPoint(keypointCtx, p[1], p[0], 2, 'red');
-        });
-      });
-    }
+    // keypointCtx.clearRect(0, 0, videoWidth, videoHeight);
+    // if (guiState.debug.showDetectionDebug) {
+    //   poses.forEach(({score, keypoints}) => {
+    //   if (score >= minPoseConfidence) {
+    //       drawKeypoints(keypoints, minPartConfidence, keypointCtx);
+    //       drawSkeleton(keypoints, minPartConfidence, keypointCtx);
+    //     }
+    //   });
+    //   faceDetection.forEach(face => {
+    //     Object.values(facePartName2Index).forEach(index => {
+    //         let p = face.scaledMesh[index];
+    //         drawPoint(keypointCtx, p[1], p[0], 2, 'red');
+    //     });
+    //   });
+    // }
 
     canvasScope.project.clear();
 
@@ -313,7 +349,7 @@ function detectPoseInRealTime(video) {
       new canvasScope.Point(0, 0));
 
     // End monitoring code for frames per second
-    stats.end();
+    // stats.end();
 
     requestAnimationFrame(poseDetectionFrame);
   }
@@ -344,6 +380,9 @@ function setupCanvas() {
 export async function bindPage() {
   setupCanvas();
 
+ 
+  
+
   toggleLoadingUI(true);
   setStatusText('Loading PoseNet model...');
   posenet = await posenet_module.load({
@@ -372,10 +411,11 @@ export async function bindPage() {
   }
 
   setupGui([], posenet);
-  setupFPS();
+  // setupFPS();
   
   toggleLoadingUI(false);
   detectPoseInRealTime(video, posenet);
+  
 }
 
 navigator.getUserMedia = navigator.getUserMedia ||
